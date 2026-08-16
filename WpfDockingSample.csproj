@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <!-- Codexの制限付き検証環境でのみSDKの自動探索を省略する。通常実行時は未使用。 -->
+  <PropertyGroup Condition="'$(CodexSandboxBuild)' == 'true'">
+    <TargetPlatformSdkPath>C:\Program Files (x86)\Windows Kits\10\</TargetPlatformSdkPath>
+    <TargetPlatformDisplayName>Windows 10</TargetPlatformDisplayName>
+    <TargetPlatformMoniker>Windows,Version=7.0</TargetPlatformMoniker>
+  </PropertyGroup>
+</Project>
