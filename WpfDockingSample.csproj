@@ -1,15 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
-  <!-- Codexの制限付き検証環境でのみSDKの自動探索を省略する。通常実行時は未使用。 -->
+  <ItemGroup>
+    <!-- 開発PCに.NET Framework 4.8 Developer Packがない場合もビルド可能にする参照アセンブリ。実行物には含まれません。 -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0" PrivateAssets="all" />
+  </ItemGroup>
+  <!-- Codexの制限付き検証環境でのみWindows SDKの自動探索を省略する。通常のビルドでは未使用。 -->
   <PropertyGroup Condition="'$(CodexSandboxBuild)' == 'true'">
     <TargetPlatformSdkPath>C:\Program Files (x86)\Windows Kits\10\</TargetPlatformSdkPath>
-    <TargetPlatformDisplayName>Windows 10</TargetPlatformDisplayName>
+    <TargetPlatformDisplayName>Windows</TargetPlatformDisplayName>
     <TargetPlatformMoniker>Windows,Version=7.0</TargetPlatformMoniker>
   </PropertyGroup>
 </Project>

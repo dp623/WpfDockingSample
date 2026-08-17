@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -9,7 +11,7 @@ public sealed class DockRegion : Border
 {
     private readonly TabControl _tabs;
     private readonly Border _dropIndicator;
-    private readonly Dictionary<DockItem, TabItem> _tabByItem = [];
+    private readonly Dictionary<DockItem, TabItem> _tabByItem = new Dictionary<DockItem, TabItem>();
     private Point _mouseDownPoint;
     private TabItem? _dragCandidate;
 
@@ -83,9 +85,11 @@ public sealed class DockRegion : Border
 
     public bool RemoveItem(DockItem item)
     {
-        if (!_tabByItem.Remove(item, out TabItem? tab))
+        TabItem? tab;
+        if (!_tabByItem.TryGetValue(item, out tab))
             return false;
 
+        _tabByItem.Remove(item);
         // UIElementは複数の親を持てないため、移動前にContentを明示的に外す。
         tab.Content = null;
         _tabs.Items.Remove(tab);

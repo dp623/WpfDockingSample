@@ -4,12 +4,22 @@
 # WPF Docking UI Sample
 
 WPF標準機能だけで実装した、Visual Studio風の簡易ドッキングUIです。
+対象フレームワークは **.NET Framework 4.8** です。
+
+## 必要環境
+
+- 実行時: .NET Framework 4.8 Runtime
+- 開発時: Visual Studioの「.NET デスクトップ開発」ワークロード、または .NET SDK
+
+プロジェクトは `Microsoft.NETFramework.ReferenceAssemblies` をビルド時だけ参照するため、.NET Framework 4.8 Developer Packが入っていない環境でも復元後にビルドできます。このパッケージや外部ドッキングライブラリが実行物へ組み込まれることはありません。
 
 ## 実行
 
 ```powershell
 dotnet run --project .\WpfDockingSample.csproj
 ```
+
+Visual Studioでは `WpfDockingSample.csproj` を開き、スタートアッププロジェクトとして実行できます。
 
 ## 操作
 

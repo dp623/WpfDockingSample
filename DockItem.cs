@@ -16,7 +16,17 @@ public sealed class DockItem
     }
 }
 
-public sealed record DockDragData(DockItem Item, DockRegion Source);
+public sealed class DockDragData
+{
+    public DockItem Item { get; }
+    public DockRegion Source { get; }
+
+    public DockDragData(DockItem item, DockRegion source)
+    {
+        Item = item;
+        Source = source;
+    }
+}
 
 public enum DockDropPosition
 {
