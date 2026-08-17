@@ -37,10 +37,41 @@ Visual Studioでは `WpfDockingSample.csproj` を開き、スタートアップ�
 
 ## 実装構成
 
-- `DockItem.cs`: 移動可能なコンテンツのデータ
+- `DockItem.cs`: UI要素を持たない移動可能な項目モデル
+- `MainWindowViewModel.cs`: 項目コレクションと追加コマンド
+- `RelayCommand.cs`: ViewModelからボタン操作を公開するICommand実装
+- `DockingManager.xaml`: 再利用可能なドッキングコントロールの外枠
+- `DockingManager.xaml.cs`: コレクション監視、ドロップ判定、分割ツリーの管理
 - `DockRegion.cs`: 複数項目のタブ表示、ドラッグ開始、ドロップ位置判定
 - `DockSplitContainer.cs`: 再帰的な領域分割と `GridSplitter`
-- `MainWindow.xaml.cs`: ウィンドウ全体のドロップ判定、タブ移動、分割ツリーの組み替え、空領域の整理
+- `MainWindow.xaml`: ViewModelとDockingManagerをBindingする利用例
+- `MainWindow.xaml.cs`: `InitializeComponent()`のみ
+
+## 別のWindowやUserControlで使用する
+
+ViewModelで `ObservableCollection<DockItem>` を公開し、次のようにBindingします。
+
+```xml
+<local:DockingManager ItemsSource="{Binding Items}"
+                      ItemTemplate="{StaticResource DockItemTemplate}"/>
+```
+
+`ItemTemplate`にはDockItem本文の表示方法を指定します。
+
+```xml
+<DataTemplate x:Key="DockItemTemplate" DataType="{x:Type local:DockItem}">
+    <TextBox Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}"/>
+</DataTemplate>
+```
+
+`DockingManager`、`DockRegion`、`DockSplitContainer`は `MainWindow` やそのDataContextを参照しません。別の画面では独自のViewModel、コマンド、DataTemplateをそのまま利用できます。
+
+## MVVM上の責務
+
+- ViewModelはDockItemの追加・削除と内容の更新を担当します。
+- ViewはDataTemplateで項目の見た目を決定します。
+- DockingManagerはタブの所属領域や分割状態など、表示レイアウトだけを担当します。
+- MainWindowのボタンはClickイベントではなくICommandへBindingされています。
 
 ## ドッキングツリー
 

@@ -6,12 +6,14 @@ using System.Windows.Media;
 
 namespace WpfDockingSample;
 
+/// <summary>2つのドッキング要素とサイズ変更用GridSplitterを保持します。</summary>
 public sealed class DockSplitContainer : Grid
 {
     public Orientation Orientation { get; }
     public UIElement First { get; private set; }
     public UIElement Second { get; private set; }
 
+    /// <summary>指定方向に2つの要素を分割配置します。</summary>
     public DockSplitContainer(Orientation orientation, UIElement first, UIElement second)
     {
         Orientation = orientation;
@@ -22,14 +24,17 @@ public sealed class DockSplitContainer : Grid
         BuildVisualTree();
     }
 
+    /// <summary>指定した子要素とは反対側の子要素を返します。</summary>
     public UIElement GetSibling(UIElement child) =>
         ReferenceEquals(child, First) ? Second : First;
 
+    /// <summary>レイアウト情報を維持したまま子要素をビジュアルツリーから外します。</summary>
     public void DetachChild(UIElement child)
     {
         Children.Remove(child);
     }
 
+    /// <summary>指定した子要素を新しい要素へ置き換えます。</summary>
     public void ReplaceChild(UIElement oldChild, UIElement newChild)
     {
         bool isFirst = ReferenceEquals(oldChild, First);
@@ -43,6 +48,7 @@ public sealed class DockSplitContainer : Grid
         Place(newChild, index);
     }
 
+    /// <summary>分割方向に応じた行列とGridSplitterを構築します。</summary>
     private void BuildVisualTree()
     {
         var splitter = new GridSplitter
@@ -76,6 +82,7 @@ public sealed class DockSplitContainer : Grid
         }
     }
 
+    /// <summary>要素を指定した行または列へ配置します。</summary>
     private void Place(UIElement element, int index)
     {
         if (Orientation == System.Windows.Controls.Orientation.Horizontal)

@@ -1,0 +1,36 @@
+<UserControl x:Class="WpfDockingSample.DockingManager"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             AllowDrop="True"
+             PreviewDragOver="Control_PreviewDragOver"
+             PreviewDragLeave="Control_PreviewDragLeave"
+             PreviewDrop="Control_PreviewDrop">
+    <UserControl.Resources>
+        <Style TargetType="GridSplitter">
+            <Setter Property="Background" Value="#FF46464A"/>
+            <Setter Property="ShowsPreview" Value="True"/>
+        </Style>
+    </UserControl.Resources>
+    <Grid x:Name="DockWorkspace">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" MinWidth="130"/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="*" MinWidth="280"/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="250" MinWidth="130"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" MinHeight="200"/>
+            <RowDefinition Height="5"/>
+            <RowDefinition Height="210" MinHeight="110"/>
+        </Grid.RowDefinitions>
+
+        <ContentControl x:Name="LeftRoot" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3"/>
+        <GridSplitter Grid.Column="1" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Stretch"/>
+        <ContentControl x:Name="DocumentRoot" Grid.Column="2" Grid.Row="0"/>
+        <GridSplitter Grid.Column="3" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Stretch"/>
+        <ContentControl x:Name="RightRoot" Grid.Column="4" Grid.Row="0" Grid.RowSpan="3"/>
+        <GridSplitter Grid.Column="2" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        <ContentControl x:Name="BottomRoot" Grid.Column="2" Grid.Row="2"/>
+    </Grid>
+</UserControl>

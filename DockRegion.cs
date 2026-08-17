@@ -7,10 +7,12 @@ using System.Windows.Media;
 
 namespace WpfDockingSample;
 
+/// <summary>複数のDockItemをタブとして表示する1つのドッキング領域です。</summary>
 public sealed class DockRegion : Border
 {
     private readonly TabControl _tabs;
     private readonly Border _dropIndicator;
+    private readonly DataTemplate? _itemTemplate;
     private readonly Dictionary<DockItem, TabItem> _tabByItem = new Dictionary<DockItem, TabItem>();
     private Point _mouseDownPoint;
     private TabItem? _dragCandidate;
@@ -18,8 +20,11 @@ public sealed class DockRegion : Border
     public IReadOnlyCollection<DockItem> Items => _tabByItem.Keys;
     public int ItemCount => _tabByItem.Count;
 
-    public DockRegion()
+    /// <summary>ドッキング領域を初期化します。</summary>
+    /// <param name="itemTemplate">各項目の本文表示に使用するテンプレート。</param>
+    public DockRegion(DataTemplate? itemTemplate)
     {
+        _itemTemplate = itemTemplate;
         Background = new SolidColorBrush(Color.FromRgb(37, 37, 38));
         BorderBrush = new SolidColorBrush(Color.FromRgb(63, 63, 70));
         BorderThickness = new Thickness(1);
@@ -50,6 +55,7 @@ public sealed class DockRegion : Border
 
     }
 
+    /// <summary>項目をタブとして追加します。</summary>
     public void AddItem(DockItem item, bool select = true)
     {
         if (_tabByItem.ContainsKey(item))
@@ -62,7 +68,7 @@ public sealed class DockRegion : Border
         var tab = new TabItem
         {
             Header = item.Title,
-            Content = item.Content,
+            Content = new ContentControl { Content = item, ContentTemplate = _itemTemplate },
             Tag = item,
             Foreground = Brushes.Gainsboro,
             Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
@@ -78,6 +84,8 @@ public sealed class DockRegion : Border
             _tabs.SelectedItem = tab;
     }
 
+    /// <summary>指定項目を領域から取り除きます。</summary>
+    /// <returns>項目が存在して削除された場合はtrue。</returns>
     public bool RemoveItem(DockItem item)
     {
         TabItem? tab;
@@ -85,12 +93,13 @@ public sealed class DockRegion : Border
             return false;
 
         _tabByItem.Remove(item);
-        // UIElementは複数の親を持てないため、移動前にContentを明示的に外す。
+        // ContentControlは複数の親を持てないため、移動前に明示的に外す。
         tab.Content = null;
         _tabs.Items.Remove(tab);
         return true;
     }
 
+    /// <summary>タブヘッダーのドラッグ開始候補位置を記録します。</summary>
     private void Tab_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (sender is not TabItem tab)
@@ -104,6 +113,7 @@ public sealed class DockRegion : Border
         _mouseDownPoint = e.GetPosition(this);
     }
 
+    /// <summary>最小ドラッグ距離を超えたときにWPFドラッグ操作を開始します。</summary>
     private void Tab_MouseMove(object sender, MouseEventArgs e)
     {
         if (_dragCandidate is null || e.LeftButton != MouseButtonState.Pressed ||
@@ -128,6 +138,7 @@ public sealed class DockRegion : Border
             return;
     }
 
+    /// <summary>領域内座標からタブ化または分割方向を判定します。</summary>
     internal DockDropPosition GetDropPosition(Point point)
     {
         // 各辺30%を分割用に使い、中央40%をタブ化用に使う。
@@ -142,6 +153,7 @@ public sealed class DockRegion : Border
         return DockDropPosition.Center;
     }
 
+    /// <summary>指定されたドロップ結果のプレビューを表示します。</summary>
     internal void ShowIndicator(DockDropPosition position)
     {
         _dropIndicator.Visibility = Visibility.Visible;
@@ -156,6 +168,7 @@ public sealed class DockRegion : Border
         };
     }
 
+    /// <summary>ドロッププレビューを非表示にします。</summary>
     internal void HideIndicator()
     {
         _dropIndicator.Visibility = Visibility.Collapsed;
