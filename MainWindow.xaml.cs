@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace WpfDockingSample;
@@ -10,6 +12,7 @@ public partial class MainWindow : Window
     private DockRegion _documentRegion = null!;
     private int _toolNumber = 1;
     private int _documentNumber = 1;
+    private DockRegion? _previewRegion;
 
     public MainWindow()
     {
@@ -68,16 +71,135 @@ public partial class MainWindow : Window
         CleanupEmptyRegion(data.Source);
     }
 
-    public void FloatItem(DockDragData data, Point screenPoint)
+    private void Window_PreviewDragOver(object sender, DragEventArgs e)
     {
-        if (!data.Source.RemoveItem(data.Item))
+        if (!e.Data.GetDataPresent(typeof(DockDragData)))
+        {
+            ClearDropPreview();
+            e.Effects = DragDropEffects.None;
+            return;
+        }
+
+        Point windowPoint = e.GetPosition(this);
+        DockRegion? target = FindDropTarget(windowPoint);
+        if (target is null)
+        {
+            ClearDropPreview();
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
+        Point regionPoint = e.GetPosition(target);
+        DockDropPosition position = target.GetDropPosition(regionPoint);
+
+        if (!ReferenceEquals(_previewRegion, target))
+            ClearDropPreview();
+
+        _previewRegion = target;
+        target.ShowIndicator(position);
+        e.Effects = DragDropEffects.Move;
+        e.Handled = true;
+    }
+
+    private void Window_PreviewDragLeave(object sender, DragEventArgs e)
+    {
+        // 子要素間の移動でもDragLeaveが発生することがあるため、作業領域外の時だけ消す。
+        Point point = e.GetPosition(DockWorkspace);
+        if (point.X < 0 || point.Y < 0 ||
+            point.X > DockWorkspace.ActualWidth || point.Y > DockWorkspace.ActualHeight)
+            ClearDropPreview();
+    }
+
+    private void Window_PreviewDrop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(typeof(DockDragData)) is not DockDragData data)
             return;
 
-        var region = new DockRegion();
-        region.AddItem(data.Item);
-        var window = new FloatingDockWindow(region, screenPoint) { Owner = this };
-        window.Show();
-        CleanupEmptyRegion(data.Source);
+        DockRegion? target = FindDropTarget(e.GetPosition(this));
+        if (target is null)
+        {
+            ClearDropPreview();
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
+        DockDropPosition position = target.GetDropPosition(e.GetPosition(target));
+        ClearDropPreview();
+        MoveDockItem(data, target, position);
+        e.Effects = DragDropEffects.Move;
+        e.Handled = true;
+    }
+
+    private DockRegion? FindDropTarget(Point windowPoint)
+    {
+        Point workspacePoint = TranslatePoint(windowPoint, DockWorkspace);
+        if (workspacePoint.X < 0 || workspacePoint.Y < 0 ||
+            workspacePoint.X > DockWorkspace.ActualWidth ||
+            workspacePoint.Y > DockWorkspace.ActualHeight)
+            return null;
+
+        var regions = new List<DockRegion>();
+        CollectRegions(DockWorkspace, regions);
+
+        DockRegion? nearest = null;
+        double nearestDistance = double.MaxValue;
+
+        foreach (DockRegion region in regions)
+        {
+            if (!region.IsVisible || region.ActualWidth <= 0 || region.ActualHeight <= 0)
+                continue;
+
+            Rect bounds;
+            try
+            {
+                bounds = region.TransformToAncestor(this)
+                    .TransformBounds(new Rect(0, 0, region.ActualWidth, region.ActualHeight));
+            }
+            catch (InvalidOperationException)
+            {
+                continue;
+            }
+
+            // 領域内ならその領域を即採用する。
+            if (bounds.Contains(windowPoint))
+                return region;
+
+            // splitterや余白上では、矩形までの距離が最短の領域を採用する。
+            double dx = windowPoint.X < bounds.Left ? bounds.Left - windowPoint.X
+                : windowPoint.X > bounds.Right ? windowPoint.X - bounds.Right : 0;
+            double dy = windowPoint.Y < bounds.Top ? bounds.Top - windowPoint.Y
+                : windowPoint.Y > bounds.Bottom ? windowPoint.Y - bounds.Bottom : 0;
+            double distance = dx * dx + dy * dy;
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearest = region;
+            }
+        }
+
+        return nearest;
+    }
+
+    private static void CollectRegions(DependencyObject parent, ICollection<DockRegion> result)
+    {
+        int count = VisualTreeHelper.GetChildrenCount(parent);
+        for (int i = 0; i < count; i++)
+        {
+            DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+            if (child is DockRegion region)
+                result.Add(region);
+            else
+                CollectRegions(child, result);
+        }
+    }
+
+    private void ClearDropPreview()
+    {
+        if (_previewRegion is not null)
+            _previewRegion.HideIndicator();
+        _previewRegion = null;
     }
 
     private void SplitRegion(DockRegion target, DockRegion newRegion, DockDropPosition position)
@@ -103,13 +225,6 @@ public partial class MainWindow : Window
     {
         if (region.ItemCount != 0)
             return;
-
-        if (Window.GetWindow(region) is FloatingDockWindow floating)
-        {
-            floating.Content = null;
-            floating.Close();
-            return;
-        }
 
         DependencyObject? parent = LogicalTreeHelper.GetParent(region) ?? region.Parent;
         if (parent is not DockSplitContainer split)

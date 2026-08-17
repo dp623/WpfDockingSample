@@ -23,7 +23,6 @@ public sealed class DockRegion : Border
         Background = new SolidColorBrush(Color.FromRgb(37, 37, 38));
         BorderBrush = new SolidColorBrush(Color.FromRgb(63, 63, 70));
         BorderThickness = new Thickness(1);
-        AllowDrop = true;
         MinWidth = 90;
         MinHeight = 70;
 
@@ -49,10 +48,6 @@ public sealed class DockRegion : Border
         Panel.SetZIndex(_dropIndicator, 100);
         Child = root;
 
-        DragEnter += OnDragEnter;
-        DragOver += OnDragOver;
-        DragLeave += OnDragLeave;
-        Drop += OnDrop;
     }
 
     public void AddItem(DockItem item, bool select = true)
@@ -127,60 +122,18 @@ public sealed class DockRegion : Border
             new DataObject(typeof(DockDragData), data),
             DragDropEffects.Move);
 
-        if (result == DragDropEffects.None &&
-            Application.Current.MainWindow is MainWindow main &&
-            Window.GetWindow(this) is not FloatingDockWindow)
-        {
-            main.FloatItem(data, PointToScreen(Mouse.GetPosition(this)));
-        }
-    }
-
-    private void OnDragEnter(object sender, DragEventArgs e)
-    {
-        UpdateDropFeedback(e);
-    }
-
-    private void OnDragOver(object sender, DragEventArgs e)
-    {
-        UpdateDropFeedback(e);
-    }
-
-    private void OnDragLeave(object sender, DragEventArgs e)
-    {
-        _dropIndicator.Visibility = Visibility.Collapsed;
-    }
-
-    private void OnDrop(object sender, DragEventArgs e)
-    {
-        _dropIndicator.Visibility = Visibility.Collapsed;
-        if (e.Data.GetData(typeof(DockDragData)) is not DockDragData data ||
-            Application.Current.MainWindow is not MainWindow main)
+        // Move以外（ウィンドウ外など）は何も変更せず、元の位置へ戻す。
+        // 実際のRemoveItemは有効なDropが確定した後にだけ行われる。
+        if (result != DragDropEffects.Move)
             return;
-
-        DockDropPosition position = GetDropPosition(e.GetPosition(this));
-        main.MoveDockItem(data, this, position);
-        e.Effects = DragDropEffects.Move;
-        e.Handled = true;
     }
 
-    private void UpdateDropFeedback(DragEventArgs e)
+    internal DockDropPosition GetDropPosition(Point point)
     {
-        if (!e.Data.GetDataPresent(typeof(DockDragData)))
-        {
-            e.Effects = DragDropEffects.None;
-            return;
-        }
-
-        DockDropPosition position = GetDropPosition(e.GetPosition(this));
-        ShowIndicator(position);
-        e.Effects = DragDropEffects.Move;
-        e.Handled = true;
-    }
-
-    private DockDropPosition GetDropPosition(Point point)
-    {
-        double edgeX = Math.Min(90, ActualWidth * 0.25);
-        double edgeY = Math.Min(70, ActualHeight * 0.25);
+        // 各辺30%を分割用に使い、中央40%をタブ化用に使う。
+        // 固定px上限をなくし、大きな領域でもドロップしやすくする。
+        double edgeX = ActualWidth * 0.30;
+        double edgeY = ActualHeight * 0.30;
 
         if (point.X < edgeX) return DockDropPosition.Left;
         if (point.X > ActualWidth - edgeX) return DockDropPosition.Right;
@@ -189,7 +142,7 @@ public sealed class DockRegion : Border
         return DockDropPosition.Center;
     }
 
-    private void ShowIndicator(DockDropPosition position)
+    internal void ShowIndicator(DockDropPosition position)
     {
         _dropIndicator.Visibility = Visibility.Visible;
         _dropIndicator.Margin = position switch
@@ -201,5 +154,10 @@ public sealed class DockRegion : Border
             _ => new Thickness(ActualWidth * 0.18, ActualHeight * 0.18,
                                ActualWidth * 0.18, ActualHeight * 0.18)
         };
+    }
+
+    internal void HideIndicator()
+    {
+        _dropIndicator.Visibility = Visibility.Collapsed;
     }
 }

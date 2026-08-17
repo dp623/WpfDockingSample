@@ -2,7 +2,11 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="WPF Docking UI Sample" Width="1180" Height="760"
-        MinWidth="850" MinHeight="520" Background="#FF1E1E1E">
+        MinWidth="850" MinHeight="520" Background="#FF1E1E1E"
+        AllowDrop="True"
+        PreviewDragOver="Window_PreviewDragOver"
+        PreviewDragLeave="Window_PreviewDragLeave"
+        PreviewDrop="Window_PreviewDrop">
     <Window.Resources>
         <Style TargetType="GridSplitter">
             <Setter Property="Background" Value="#FF46464A"/>
@@ -19,12 +23,12 @@
                         Margin="0,0,6,0" Padding="10,4"/>
                 <Button Content="ドキュメントを追加" Tag="Document" Click="AddItem_Click"
                         Padding="10,4"/>
-                <TextBlock Text="タブをドラッグ：中央＝タブ化／端＝分割／領域外＝フローティング"
+                <TextBlock Text="タブをドラッグ：中央＝タブ化／端＝分割／作業領域外＝キャンセル"
                            Foreground="#FFCECECE" VerticalAlignment="Center" Margin="24,0,0,0"/>
             </StackPanel>
         </Border>
 
-        <Grid>
+        <Grid x:Name="DockWorkspace">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="250" MinWidth="130"/>
                 <ColumnDefinition Width="5"/>
