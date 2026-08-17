@@ -1,3 +1,6 @@
+# 前提
+本プログラムはAI（Codex）にて生成
+
 # WPF Docking UI Sample
 
 WPF標準機能だけで実装した、Visual Studio風の簡易ドッキングUIです。
